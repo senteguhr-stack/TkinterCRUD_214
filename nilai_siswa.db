@@ -1,0 +1,8 @@
+SQLite format 3@  .� o�oP++Ytablesqlite_sequencesqlite_sequenceCREATE TABLE sqlite_sequence(name,seq)�<##�?tablenilai_siswanilai_siswaCREATE TABLE nilai_siswa (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nama_siswa TEXT NOT NULL,
+            biologi INTEGER NOT NULL,
+            fisika INTEGER NOT NULL,
+            inggris INTEGER NOT NULL,
+            prediksi_fakultas TEXT NOT NULL
+        ) �����!ABIZPFKedokteranFOZIZdZTeknik!REYYdZZKedokteranILHAMZZdBahasa ��#nilai_siswa
