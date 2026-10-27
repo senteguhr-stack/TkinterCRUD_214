@@ -149,3 +149,10 @@ hasil = tk.Label(
 hasil.pack(pady=5)
 
 root.mainloop()
+
+reset_button = tk.Button(
+    root,
+    text="Reset Form",
+    command=reset_form
+)
+reset_button.pack(pady=5)
