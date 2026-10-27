@@ -1,6 +1,7 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 import sqlite3
+
 
 def create_db():
     conn = sqlite3.connect("nilai_siswa.db")
@@ -21,6 +22,94 @@ def create_db():
     conn.close()
 
 
+def reset_form():
+    entry_nama.delete(0, tk.END)
+    entry_biologi.delete(0, tk.END)
+    entry_fisika.delete(0, tk.END)
+    entry_inggris.delete(0, tk.END)
+
+    hasil.config(text="")
+    entry_nama.focus_set()
+
+
+def lihat_data():
+    window = tk.Toplevel(root)
+    window.title("Data Siswa")
+    window.geometry("750x300")
+
+    kolom = (
+        "id",
+        "nama_siswa",
+        "biologi",
+        "fisika",
+        "inggris",
+        "prediksi_fakultas"
+    )
+
+    tabel = ttk.Treeview(
+        window,
+        columns=kolom,
+        show="headings"
+    )
+
+    tabel.heading("id", text="ID")
+    tabel.heading("nama_siswa", text="Nama Siswa")
+    tabel.heading("biologi", text="Biologi")
+    tabel.heading("fisika", text="Fisika")
+    tabel.heading("inggris", text="Inggris")
+    tabel.heading("prediksi_fakultas", text="Prediksi Prodi")
+
+    tabel.column("id", width=40)
+    tabel.column("nama_siswa", width=150)
+    tabel.column("biologi", width=80)
+    tabel.column("fisika", width=80)
+    tabel.column("inggris", width=80)
+    tabel.column("prediksi_fakultas", width=150)
+
+    scrollbar = ttk.Scrollbar(
+        window,
+        orient="vertical",
+        command=tabel.yview
+    )
+    tabel.configure(yscrollcommand=scrollbar.set)
+
+    tabel.pack(side="left", fill="both", expand=True)
+    scrollbar.pack(side="right", fill="y")
+
+    conn = sqlite3.connect("nilai_siswa.db")
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, nama_siswa, biologi, fisika,
+                   inggris, prediksi_fakultas
+            FROM nilai_siswa
+            ORDER BY id DESC
+        """)
+
+        data_siswa = cursor.fetchall()
+
+        for data in data_siswa:
+            tabel.insert("", tk.END, values=data)
+
+        if not data_siswa:
+            messagebox.showinfo(
+                "Informasi",
+                "Belum ada data siswa di database.",
+                parent=window
+            )
+
+    except sqlite3.Error as e:
+        messagebox.showerror(
+            "Database Error",
+            f"Gagal mengambil data: {e}",
+            parent=window
+        )
+
+    finally:
+        conn.close()
+
+
 def hasil_prediksi():
     nama = entry_nama.get().strip()
     nilai_biologi = entry_biologi.get().strip()
@@ -28,19 +117,31 @@ def hasil_prediksi():
     nilai_inggris = entry_inggris.get().strip()
 
     if not nama:
-        messagebox.showerror("Error", "Nama siswa harus diisi!")
+        messagebox.showerror(
+            "Error",
+            "Nama siswa harus diisi!"
+        )
         return
 
     if not nilai_biologi:
-        messagebox.showerror("Error", "Kolom Biologi harus diisi!")
+        messagebox.showerror(
+            "Error",
+            "Kolom Biologi harus diisi!"
+        )
         return
 
     if not nilai_fisika:
-        messagebox.showerror("Error", "Kolom Fisika harus diisi!")
+        messagebox.showerror(
+            "Error",
+            "Kolom Fisika harus diisi!"
+        )
         return
 
     if not nilai_inggris:
-        messagebox.showerror("Error", "Kolom Inggris harus diisi!")
+        messagebox.showerror(
+            "Error",
+            "Kolom Inggris harus diisi!"
+        )
         return
 
     try:
@@ -48,22 +149,25 @@ def hasil_prediksi():
         fisika = int(nilai_fisika)
         inggris = int(nilai_inggris)
 
-        if nama == "":
-            messagebox.showerror("Error", "Nama siswa harus diisi!")
-            return
-
-        if any(n < 0 or n > 100 for n in [biologi, fisika, inggris]):
+        if any(
+            nilai < 0 or nilai > 100
+            for nilai in [biologi, fisika, inggris]
+        ):
             messagebox.showerror(
-                "Error", "Nilai harus antara 0 sampai 100!"
+                "Error",
+                "Nilai harus antara 0 sampai 100!"
             )
             return
 
         if biologi > fisika and biologi > inggris:
             prediksi = "Kedokteran"
+
         elif fisika > biologi and fisika > inggris:
             prediksi = "Teknik"
+
         elif inggris > biologi and inggris > fisika:
             prediksi = "Bahasa"
+
         else:
             messagebox.showwarning(
                 "Peringatan",
@@ -73,16 +177,27 @@ def hasil_prediksi():
             return
 
         conn = sqlite3.connect("nilai_siswa.db")
-        cursor = conn.cursor()
 
-        cursor.execute("""
-            INSERT INTO nilai_siswa
-            (nama_siswa, biologi, fisika, inggris, prediksi_fakultas)
-            VALUES (?, ?, ?, ?, ?)
-        """, (nama, biologi, fisika, inggris, prediksi))
+        try:
+            cursor = conn.cursor()
 
-        conn.commit()
-        conn.close()
+            cursor.execute("""
+                INSERT INTO nilai_siswa
+                (nama_siswa, biologi, fisika, inggris,
+                 prediksi_fakultas)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                nama,
+                biologi,
+                fisika,
+                inggris,
+                prediksi
+            ))
+
+            conn.commit()
+
+        finally:
+            conn.close()
 
         hasil.config(
             text=f"Nama: {nama}\nPrediksi Prodi: {prediksi}"
@@ -95,12 +210,14 @@ def hasil_prediksi():
 
     except ValueError:
         messagebox.showerror(
-            "Error", "Masukkan nilai berupa angka!"
+            "Error",
+            "Masukkan nilai berupa angka bulat!"
         )
 
     except sqlite3.Error as e:
         messagebox.showerror(
-            "Database Error", f"Gagal menyimpan data: {e}"
+            "Database Error",
+            f"Gagal menyimpan data: {e}"
         )
 
 
@@ -108,7 +225,7 @@ create_db()
 
 root = tk.Tk()
 root.title("Prediksi Prodi Pilihan")
-root.geometry("380x400")
+root.geometry("380x490")
 
 judul = tk.Label(
     root,
@@ -138,7 +255,21 @@ button = tk.Button(
     text="Submit Nilai",
     command=hasil_prediksi
 )
-button.pack(pady=15)
+button.pack(pady=10)
+
+reset_button = tk.Button(
+    root,
+    text="Reset Form",
+    command=reset_form
+)
+reset_button.pack(pady=5)
+
+lihat_button = tk.Button(
+    root,
+    text="Lihat Data Siswa",
+    command=lihat_data
+)
+lihat_button.pack(pady=5)
 
 hasil = tk.Label(
     root,
@@ -149,10 +280,3 @@ hasil = tk.Label(
 hasil.pack(pady=5)
 
 root.mainloop()
-
-reset_button = tk.Button(
-    root,
-    text="Reset Form",
-    command=reset_form
-)
-reset_button.pack(pady=5)
